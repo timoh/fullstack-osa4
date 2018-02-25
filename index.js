@@ -9,6 +9,7 @@ const middleware = require('./utils/middleware')
 const config = require('./utils/config')
 const blogRouter = require('./controllers/blogs')
 const userRouter = require('./controllers/users')
+const loginRouter = require('./controllers/login')
 
 
 app.use(cors())
@@ -19,6 +20,7 @@ app.use(middleware.logger)
 
 app.use('/api/blogs', blogRouter)
 app.use('/api/users', userRouter)
+app.use('/api/login', loginRouter)
 
 mongoose.connect(config.mongoUrl).then(() => {
   console.log('connected to database', config.mongoUrl)
