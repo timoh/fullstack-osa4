@@ -32,6 +32,7 @@ mongoose.connect(config.mongoUrl).then(() => {
 mongoose.Promise = global.Promise
 
 app.use(middleware.error)
+app.use(middleware.getToken)
 
 const PORT = config.port
 

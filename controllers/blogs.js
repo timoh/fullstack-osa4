@@ -6,6 +6,10 @@ const Blog = require('../models/blog')
 const User = require('../models/user')
 const delTools = require('../utils/deleteBlogs')
 
+const middleware = require('../utils/middleware')
+
+blogRouter.use(middleware.getToken)
+
 blogRouter.get('/', async (request, response) => {
   const blogs = await Blog.find({}).populate('user', { id: 1, username: 1, name: 1, adult: 1 })
   response.json(blogs.map(Blog.format))
@@ -24,30 +28,21 @@ Format of a post:
 
 */
 
-const getToken = (req) => {
-  const auth = req.get('Authorization')
-  if (auth) {
-    if (auth.toLowerCase().startsWith('bearer ')) {
-      return auth.substring(7)
-    } else {
-      return null
-    }
-    
-  }
-  return null
-}
+
 
 blogRouter.post('/', async (request, response) => {
   const b = request.body
 
   try {
 
-    const token = getToken(request)
-    // assert.equal(typeof token, 'string')
+    // console.log("Token:", request.token)
+    // assert.equal(typeof request.token, 'string')
 
-    const decodedToken = jwt.verify(token, process.env.SECRET)
+    const decodedToken = jwt.verify(request.token, process.env.SECRET)
 
-    if (!token || !decodedToken.id) {
+    // console.log("dec token:", decodedToken)
+
+    if (!request.token || !decodedToken.id) {
       return response.status(401).json({ error: 'Problem with token - missing / invalid!' })
     }
 
