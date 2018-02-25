@@ -1,5 +1,7 @@
 const assert = require('assert')
 const blogRouter = require('express').Router()
+const jwt = require('jsonwebtoken')
+
 const Blog = require('../models/blog')
 const User = require('../models/user')
 const delTools = require('../utils/deleteBlogs')
@@ -22,7 +24,73 @@ Format of a post:
 
 */
 
+const getToken = (req) => {
+  const auth = req.get('Authorization')
+  if (auth) {
+    if (auth.toLowerCase().startsWith('bearer ')) {
+      return auth.substring(7)
+    } else {
+      return null
+    }
+    
+  }
+  return null
+}
+
 blogRouter.post('/', async (request, response) => {
+  const b = request.body
+
+  try {
+
+    const token = getToken(request)
+    // assert.equal(typeof token, 'string')
+
+    const decodedToken = jwt.verify(token, process.env.SECRET)
+
+    if (!token || !decodedToken.id) {
+      return response.status(401).json({ error: 'Problem with token - missing / invalid!' })
+    }
+
+    if (b === undefined) {
+      return response.status(400).json({ error: 'Request body is missing!' })
+    }
+
+    const getUser = await User.findById(decodedToken.id)
+
+    const adderUserId = getUser._id
+
+    const newPost = {
+      title: b.title,
+      author: b.author,
+      url: b.url,
+      likes: b.likes,
+      user: adderUserId
+    }
+
+    const blog = new Blog(newPost)
+    const result = await blog.save()
+
+    getUser.blogs.push(result)
+    await getUser.save()
+
+    response.status(201).json(result)
+
+  } catch (exception) {
+
+    if (exception.name === 'JsonWebTokenError' ) {
+      const jwtMessage = exception.message
+      const statusMessage = `There was a problem with the JSON web token: ${jwtMessage}`
+
+      response.status(401).json({ error: statusMessage })
+
+    } else {
+
+      console.log(exception)
+      response.status(500).json({ error: 'Server error!' })
+
+    }
+
+  }
 
   /**
    * 
@@ -31,27 +99,7 @@ blogRouter.post('/', async (request, response) => {
    * 
    */
 
-  const getUser = await User.findOne()
-
-  const adderUserId = getUser._id
-
-  const b = request.body
-
-  const newPost = {
-    title: b.title,
-    author: b.author,
-    url: b.url,
-    likes: b.likes,
-    user: adderUserId
-  }
-
-  const blog = new Blog(newPost)
-  const result = await blog.save()
-
-  getUser.blogs.push(result)
-  await getUser.save()
-
-  response.status(201).json(result)
+  
 })
 
 blogRouter.delete('/:id', async (request, response) => {
