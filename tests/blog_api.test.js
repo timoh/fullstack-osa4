@@ -18,11 +18,11 @@ describe('GET /api/blogs', () => {
     expect(response.body.length).toBe(3)
   })
 
-  test('the first blog is interesting', async () => {
+  test('the first blog has content', async () => {
     const response = await api
       .get('/api/blogs')
 
-    expect(response.body[0].title).toEqual('Interesting topic')
+    expect(response.body[0].title).toEqual('Can haz user?')
   })
 
 })
@@ -120,8 +120,12 @@ describe('DELETE /api/blogs/:id', () => {
     
     */
 
-    const matchingBlog = allBlogsBeforeDelete.body.filter(blog => blog._id == postResponse.body._id)
+    expect(typeof postResponse.body._id).toBe('string')
+
+    const matchingBlog = allBlogsBeforeDelete.body.filter(blog => blog.id == postResponse.body._id)
     expect(matchingBlog.length).toEqual(1)
+
+    expect(typeof matchingBlog[0].id).toBe('string')
 
     /*
     
@@ -130,7 +134,7 @@ describe('DELETE /api/blogs/:id', () => {
     */
 
     const deleteResponse = await api
-    .delete(`/api/blogs/${matchingBlog[0]._id}`)
+    .delete(`/api/blogs/${matchingBlog[0].id}`)
     .expect(201)
 
     const allBlogsAfterDelete = await api
@@ -143,7 +147,7 @@ describe('DELETE /api/blogs/:id', () => {
     
     */
 
-    const matchingAfterDelete = allBlogsAfterDelete.body.filter(blog => blog._id == postResponse.body._id)
+    const matchingAfterDelete = allBlogsAfterDelete.body.filter(blog => blog.id == postResponse.body._id)
     expect(matchingAfterDelete).toEqual([])
 
   })

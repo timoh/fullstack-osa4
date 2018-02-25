@@ -120,8 +120,12 @@ describe('DELETE /api/users/:id', () => {
     
     */
 
-    const matchingUser = allUsersBeforeDelete.body.filter(user => user._id == postResponse.body._id)
+    expect(typeof postResponse.body._id).toBe('string')
+
+    const matchingUser = allUsersBeforeDelete.body.filter(user => user.id == postResponse.body._id)
     expect(matchingUser.length).toEqual(1)
+
+    expect(typeof matchingUser[0].id).toBe('string')
 
     /*
     
@@ -130,7 +134,7 @@ describe('DELETE /api/users/:id', () => {
     */
 
     const deleteResponse = await api
-    .delete(`/api/users/${matchingUser[0]._id}`)
+    .delete(`/api/users/${matchingUser[0].id}`)
     .expect(201)
 
     const allUsersAfterDelete = await api
@@ -143,7 +147,7 @@ describe('DELETE /api/users/:id', () => {
     
     */
 
-    const matchingAfterDelete = allUsersAfterDelete.body.filter(user => user._id == postResponse.body._id)
+    const matchingAfterDelete = allUsersAfterDelete.body.filter(user => user.id == postResponse.body._id)
     expect(matchingAfterDelete).toEqual([])
 
   })

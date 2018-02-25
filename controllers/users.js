@@ -2,18 +2,9 @@ const userRouter = require('express').Router()
 const User = require('../models/user')
 const bcrypt = require('bcrypt')
 
-const formatUser = (user) => {
-  return {
-    id: user._id,
-    username: user.username,
-    name: user.name,
-    adult: user.adult
-  }
-}
-
 userRouter.get('/', async (request, response) => {
-  const users = await User.find({})
-  response.json(users.map(formatUser))
+  const users = await User.find({}).populate('blogs')
+  response.json(users.map(User.format))
 })
 
 /*
@@ -32,7 +23,16 @@ Format of a user:
 userRouter.post('/', async (request, response) => {
   try {
 
-    const saltRounds = 10
+    /*
+    
+      When testing, reduce salt rounds to speed up test suite
+    
+    */
+
+    let saltRounds = 10
+    if (process.env.NODE_ENV == 'test') {
+      saltRounds = 2
+    }
 
     const saltedPassword = await bcrypt.hash(request.body.password, saltRounds)
 

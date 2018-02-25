@@ -1,10 +1,12 @@
+const assert = require('assert')
 const blogRouter = require('express').Router()
 const Blog = require('../models/blog')
+const User = require('../models/user')
 const delTools = require('../utils/deleteBlogs')
 
 blogRouter.get('/', async (request, response) => {
-  const blogs = await Blog.find({})
-  response.json(blogs)
+  const blogs = await Blog.find({}).populate('user', { id: 1, username: 1, name: 1, adult: 1 })
+  response.json(blogs.map(Blog.format))
 })
 
 /*
@@ -21,8 +23,34 @@ Format of a post:
 */
 
 blogRouter.post('/', async (request, response) => {
-  const blog = new Blog(request.body)
+
+  /**
+   * 
+   *  Ensure that there is a user associate
+   *  with the post being created
+   * 
+   */
+
+  const getUser = await User.findOne()
+
+  const adderUserId = getUser._id
+
+  const b = request.body
+
+  const newPost = {
+    title: b.title,
+    author: b.author,
+    url: b.url,
+    likes: b.likes,
+    user: adderUserId
+  }
+
+  const blog = new Blog(newPost)
   const result = await blog.save()
+
+  getUser.blogs.push(result)
+  await getUser.save()
+
   response.status(201).json(result)
 })
 
